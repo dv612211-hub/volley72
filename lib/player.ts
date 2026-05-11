@@ -31,7 +31,6 @@ export type Skills = {
   receive: number;
   attack: number;
   block: number;
-  defense: number;
   game_sense: number;
 };
 
@@ -59,8 +58,8 @@ export type PublicPlayer = {
 };
 
 export const GENDER_LABEL: Record<PlayerGender, string> = {
-  male: "Мужчина",
-  female: "Женщина",
+  male: "Мужской",
+  female: "Женский",
 };
 
 export const DIRECTION_LABEL: Record<Direction, string> = {
@@ -129,8 +128,16 @@ export const SKILL_LABEL: Record<keyof Skills, string> = {
   receive: "Приём",
   attack: "Атака",
   block: "Блок",
-  defense: "Защита (краб / кат)",
   game_sense: "Игровое понимание",
+};
+
+export const SKILL_HINT: Record<keyof Skills, string> = {
+  serve: "Стабильность и точность подачи в игре",
+  receive: "Умение принять сложную подачу и атаку соперника",
+  attack: "Сила, точность и разнообразие атакующих ударов",
+  block: "Умение читать атаку и выставлять эффективный блок",
+  game_sense:
+    "Тактическое мышление, чтение игры, взаимодействие с партнёром",
 };
 
 export const SKILL_KEYS: (keyof Skills)[] = [
@@ -138,7 +145,6 @@ export const SKILL_KEYS: (keyof Skills)[] = [
   "receive",
   "attack",
   "block",
-  "defense",
   "game_sense",
 ];
 
@@ -167,6 +173,34 @@ export function parseTrainingExperience(raw: string | null): TrainingExp[] {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean) as TrainingExp[];
+}
+
+export function computeAge(birthDate: string | null | undefined): number | null {
+  if (!birthDate) return null;
+  const d = new Date(birthDate);
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age < 130 ? age : null;
+}
+
+export function formatPhone(input: string): string {
+  let body = input.replace(/\D/g, "");
+  if (body.startsWith("7") || body.startsWith("8")) body = body.slice(1);
+  body = body.slice(0, 10);
+  if (body.length === 0) return "";
+  let out = "+7 (" + body.slice(0, 3);
+  if (body.length >= 3) out += ")";
+  if (body.length > 3) out += " " + body.slice(3, 6);
+  if (body.length > 6) out += "-" + body.slice(6, 8);
+  if (body.length > 8) out += "-" + body.slice(8, 10);
+  return out;
+}
+
+export function isPhoneValid(phone: string): boolean {
+  return phone.replace(/\D/g, "").length >= 11;
 }
 
 export function avatarInitials(name: string): string {

@@ -77,7 +77,17 @@ export async function POST(req: Request) {
     typeof obj.gender === "string" && ALLOWED_GENDERS.has(obj.gender)
       ? obj.gender
       : null;
-  const age = pickInt(obj.age, 5, 120);
+  let birth_date: string | null = null;
+  if (typeof obj.birth_date === "string" && obj.birth_date.trim()) {
+    const raw = obj.birth_date.trim().slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const d = new Date(raw);
+      const year = d.getUTCFullYear();
+      if (!Number.isNaN(d.getTime()) && year >= 1900 && year <= 2100) {
+        birth_date = raw;
+      }
+    }
+  }
   const height = pickInt(obj.height, 100, 250);
   const city =
     typeof obj.city === "string" && obj.city.trim()
@@ -123,7 +133,6 @@ export async function POST(req: Request) {
     "receive",
     "attack",
     "block",
-    "defense",
     "game_sense",
   ] as (keyof Skills)[]) {
     const v = pickInt(rawSkills[key], 1, 5);
@@ -136,7 +145,7 @@ export async function POST(req: Request) {
     name,
     phone,
     gender,
-    age,
+    birth_date,
     height,
     city,
     direction,

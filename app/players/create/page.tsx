@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import {
   AVAILABLE_TIME_LABEL,
   DIRECTION_LABEL,
@@ -10,8 +10,12 @@ import {
   GAME_FORMAT_LABEL,
   GENDER_LABEL,
   LEVEL_LABEL,
+  SKILL_HINT,
   SKILL_KEYS,
   SKILL_LABEL,
+  computeAge,
+  formatPhone,
+  isPhoneValid,
   TOURNAMENT_EXP_LABEL,
   TRAINING_EXP_LABEL,
   computeLevel,
@@ -47,9 +51,12 @@ export default function CreatePlayerPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [gender, setGender] = useState<PlayerGender | null>(null);
-  const [age, setAge] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [height, setHeight] = useState("");
   const [city, setCity] = useState("Тюмень");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Step 2
   const [direction, setDirection] = useState<Direction | null>(null);
@@ -70,10 +77,12 @@ export default function CreatePlayerPage() {
     return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
   }
 
+  const phoneValid = phone === "" || isPhoneValid(phone);
   const canNext1 =
     name.trim().length > 0 &&
     gender !== null &&
-    (age === "" || /^\d+$/.test(age)) &&
+    phoneValid &&
+    (birthDate === "" || /^\d{4}-\d{2}-\d{2}$/.test(birthDate)) &&
     (height === "" || /^\d+$/.test(height));
   const canNext2 =
     direction !== null && gameFormats.length > 0 && hand !== null;
@@ -101,8 +110,9 @@ export default function CreatePlayerPage() {
           name: name.trim(),
           phone: phone.trim() || null,
           gender,
-          age: age ? Number(age) : null,
+          birth_date: birthDate || null,
           height: height ? Number(height) : null,
+          photo_url: photo,
           city: city.trim() || "Тюмень",
           direction,
           game_formats: gameFormats,
@@ -168,10 +178,27 @@ export default function CreatePlayerPage() {
             >
               <input
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+7 (900) 000-00-00"
+                onFocus={() => {
+                  if (!phone) setPhone("+7 ");
+                }}
+                onChange={(e) => {
+                  const next = formatPhone(e.target.value);
+                  // Once user has touched the field, never let it fall below "+7 ".
+                  setPhone(next || "+7 ");
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    (e.key === "Backspace" || e.key === "Delete") &&
+                    phone === "+7 "
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                placeholder="+7 (___) ___-__-__"
                 type="tel"
                 inputMode="tel"
+                maxLength={18}
+                aria-invalid={phone.length > 3 && !isPhoneValid(phone)}
                 className={inputCls}
                 autoComplete="tel"
               />
@@ -188,19 +215,23 @@ export default function CreatePlayerPage() {
               />
             </Field>
 
+            <Field
+              label="Дата рождения"
+              hint={
+                birthDate && computeAge(birthDate) != null
+                  ? `${computeAge(birthDate)} лет — не показывается публично`
+                  : "Не показывается в публичном профиле"
+              }
+            >
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Возраст">
-                <input
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={age}
-                  onChange={(e) =>
-                    setAge(e.target.value.replace(/\D/g, "").slice(0, 3))
-                  }
-                  placeholder="25"
-                  className={inputCls}
-                />
-              </Field>
               <Field label="Рост, см">
                 <input
                   inputMode="numeric"
@@ -213,15 +244,29 @@ export default function CreatePlayerPage() {
                   className={inputCls}
                 />
               </Field>
+              <Field label="Город">
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className={inputCls}
+                />
+              </Field>
             </div>
 
-            <Field label="Город">
-              <input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className={inputCls}
+            <Field label="Фото профиля">
+              <PhotoUpload
+                photo={photo}
+                onPhoto={setPhoto}
+                onError={setPhotoError}
+                inputRef={photoInputRef}
               />
+              {photoError && (
+                <p className="mt-2 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+                  {photoError}
+                </p>
+              )}
             </Field>
+
           </StepBlock>
         )}
 
@@ -331,14 +376,14 @@ export default function CreatePlayerPage() {
             subtitle="Оцените каждый навык от 1 до 5"
           >
             {SKILL_KEYS.map((key) => (
-              <Field key={key} label={SKILL_LABEL[key]} required>
-                <Rating
-                  value={skills[key]}
-                  onChange={(v) =>
-                    setSkills((prev) => ({ ...prev, [key]: v }))
-                  }
-                />
-              </Field>
+              <SkillField
+                key={key}
+                skillKey={key}
+                value={skills[key]}
+                onChange={(v) =>
+                  setSkills((prev) => ({ ...prev, [key]: v }))
+                }
+              />
             ))}
             <div className="rounded-2xl border border-orange-400/40 bg-orange-500/10 p-4 text-center">
               <p className="text-[10px] uppercase tracking-widest text-orange-300">
@@ -531,6 +576,193 @@ function ChoiceList({
   );
 }
 
+function PhotoUpload({
+  photo,
+  onPhoto,
+  onError,
+  inputRef,
+}: {
+  photo: string | null;
+  onPhoto: (data: string | null) => void;
+  onError: (msg: string | null) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  async function compress(file: File, maxDim = 800): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onerror = () => reject(new Error("read"));
+      fr.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("image"));
+        img.onload = () => {
+          const ratio = Math.min(
+            1,
+            maxDim / Math.max(img.width, img.height),
+          );
+          const w = Math.max(1, Math.round(img.width * ratio));
+          const h = Math.max(1, Math.round(img.height * ratio));
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("canvas"));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.src = fr.result as string;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+
+  async function onFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    onError(null);
+    if (!file.type.startsWith("image/")) {
+      onError("Файл не похож на изображение");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      onError("Файл больше 5 МБ");
+      return;
+    }
+    try {
+      const compressed = await compress(file);
+      onPhoto(compressed);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={onFile}
+        className="hidden"
+      />
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photo}
+          alt="Фото профиля"
+          className="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-orange-400/60"
+        />
+      ) : (
+        <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-white/10 text-2xl text-slate-400">
+          ?
+        </span>
+      )}
+      <div className="flex-1 space-y-2">
+        <button
+          type="button"
+          onPointerDown={() => inputRef.current?.click()}
+          style={tapStyle}
+          className="h-12 w-full rounded-xl border border-white/15 bg-white/[0.04] text-sm font-bold text-slate-200"
+        >
+          {photo ? "Сменить фото" : "📷 Добавить фото"}
+        </button>
+        {photo && (
+          <button
+            type="button"
+            onPointerDown={() => onPhoto(null)}
+            style={tapStyle}
+            className="h-10 w-full rounded-xl border border-rose-400/30 text-xs font-semibold text-rose-300"
+          >
+            Удалить фото
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function useTapGesture(threshold = 10) {
+  const startRef = useRef<{ x: number; y: number; id: number } | null>(null);
+  return {
+    onPointerDown: (e: React.PointerEvent) => {
+      startRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        id: e.pointerId,
+      };
+    },
+    onPointerCancel: () => {
+      startRef.current = null;
+    },
+    onPointerLeave: () => {
+      startRef.current = null;
+    },
+    /**
+     * Returns true if the pointer moved less than `threshold` since pointerdown.
+     * Resets the state in either case.
+     */
+    confirmTap: (e: React.PointerEvent): boolean => {
+      const s = startRef.current;
+      startRef.current = null;
+      if (!s || s.id !== e.pointerId) return false;
+      const dx = e.clientX - s.x;
+      const dy = e.clientY - s.y;
+      return Math.hypot(dx, dy) <= threshold;
+    },
+  };
+}
+
+function SkillField({
+  skillKey,
+  value,
+  onChange,
+}: {
+  skillKey: keyof typeof SKILL_LABEL;
+  value: number | undefined;
+  onChange: (v: number) => void;
+}) {
+  const [showHint, setShowHint] = useState(false);
+  const tap = useTapGesture();
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="text-xs font-bold uppercase tracking-wide text-slate-300">
+          {SKILL_LABEL[skillKey]}
+          <span className="text-orange-400"> *</span>
+        </span>
+        <button
+          type="button"
+          onPointerDown={tap.onPointerDown}
+          onPointerUp={(e) => {
+            if (tap.confirmTap(e)) setShowHint((v) => !v);
+          }}
+          onPointerCancel={tap.onPointerCancel}
+          onPointerLeave={tap.onPointerLeave}
+          aria-expanded={showHint}
+          aria-label="Подсказка"
+          style={tapStyle}
+          className={`grid h-8 w-8 place-items-center rounded-full text-base transition ${
+            showHint
+              ? "bg-orange-500"
+              : "border border-white/20"
+          }`}
+        >
+          ℹ️
+        </button>
+      </div>
+      {showHint && (
+        <p className="mb-2 rounded-lg border border-orange-400/30 bg-orange-500/10 px-3 py-2 text-xs text-orange-100">
+          {SKILL_HINT[skillKey]}
+        </p>
+      )}
+      <Rating value={value} onChange={onChange} />
+    </div>
+  );
+}
+
 function Rating({
   value,
   onChange,
@@ -540,25 +772,46 @@ function Rating({
 }) {
   return (
     <div className="grid grid-cols-5 gap-2">
-      {[1, 2, 3, 4, 5].map((n) => {
-        const active = value === n;
-        return (
-          <button
-            key={n}
-            type="button"
-            onPointerDown={() => onChange(n)}
-            aria-pressed={active}
-            style={tapStyle}
-            className={`h-14 rounded-xl border-2 text-lg font-black transition active:scale-[0.99] ${
-              active
-                ? "border-orange-500 bg-orange-500 text-white"
-                : "border-white/15 bg-[#0b1535] text-slate-300"
-            }`}
-          >
-            {n}
-          </button>
-        );
-      })}
+      {[1, 2, 3, 4, 5].map((n) => (
+        <RatingButton
+          key={n}
+          n={n}
+          active={value === n}
+          onTap={() => onChange(n)}
+        />
+      ))}
     </div>
+  );
+}
+
+function RatingButton({
+  n,
+  active,
+  onTap,
+}: {
+  n: number;
+  active: boolean;
+  onTap: () => void;
+}) {
+  const tap = useTapGesture();
+  return (
+    <button
+      type="button"
+      onPointerDown={tap.onPointerDown}
+      onPointerUp={(e) => {
+        if (tap.confirmTap(e)) onTap();
+      }}
+      onPointerCancel={tap.onPointerCancel}
+      onPointerLeave={tap.onPointerLeave}
+      aria-pressed={active}
+      style={tapStyle}
+      className={`h-14 rounded-xl border-2 text-lg font-black transition active:scale-[0.99] ${
+        active
+          ? "border-orange-500 bg-orange-500 text-white"
+          : "border-white/15 bg-[#0b1535] text-slate-300"
+      }`}
+    >
+      {n}
+    </button>
   );
 }
