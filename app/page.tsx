@@ -227,15 +227,15 @@ export default async function Home() {
               </div>
             )}
           </div>
-
-      <section style={{padding: '40px 16px', textAlign: 'center', background: '#0b1535'}}>
-        <h2 style={{fontSize: '24px', fontWeight: 700, marginBottom: '16px', color: '#fff'}}>Турниры</h2>
-        <div style={{display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap'}}>
-          <a href='/tournaments/create' style={{background: '#f97316', color: '#fff', padding: '14px 28px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', fontSize: '16px'}}>Создать турнир</a>
-          <a href='/tournaments' style={{background: '#1a2a55', color: '#fff', padding: '14px 28px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', fontSize: '16px'}}>Все турниры</a>
-        </div>
-      </section>
-    </main>
+        </section>
+        <section style={{padding: '40px 16px', textAlign: 'center', background: '#0b1535'}}>
+          <h2 style={{fontSize: '24px', fontWeight: 700, marginBottom: '16px', color: '#fff'}}>Турниры</h2>
+          <div style={{display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap'}}>
+            <a href='/tournaments/create' style={{background: '#f97316', color: '#fff', padding: '14px 28px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', fontSize: '16px'}}>Создать турнир</a>
+            <a href='/tournaments' style={{background: '#1a2a55', color: '#fff', padding: '14px 28px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', fontSize: '16px'}}>Все турниры</a>
+          </div>
+        </section>
+      </main>
       <footer
         id="contacts"
         className="border-t border-white/10 bg-[#070b20]"
