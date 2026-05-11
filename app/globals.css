@@ -24,3 +24,69 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes draw-shuffle {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  18% {
+    transform: translate(var(--x1, 0px), var(--y1, 0px)) rotate(var(--r1, 0deg))
+      scale(var(--s1, 1));
+  }
+  36% {
+    transform: translate(var(--x2, 0px), var(--y2, 0px)) rotate(var(--r2, 0deg))
+      scale(var(--s2, 1));
+  }
+  54% {
+    transform: translate(var(--x3, 0px), var(--y3, 0px)) rotate(var(--r3, 0deg))
+      scale(var(--s3, 1));
+  }
+  72% {
+    transform: translate(var(--x4, 0px), var(--y4, 0px)) rotate(var(--r4, 0deg))
+      scale(var(--s4, 1));
+  }
+  88% {
+    transform: translate(0, 0) rotate(0deg) scale(1.06);
+  }
+}
+
+.draw-card-anim {
+  animation: draw-shuffle 3.4s cubic-bezier(0.55, 0, 0.45, 1) forwards;
+  will-change: transform;
+}
+
+@keyframes draw-card-land {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+    filter: brightness(1.4);
+  }
+  60% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+.draw-card-land {
+  animation: draw-card-land 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes draw-court-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.draw-court-pop {
+  animation: draw-court-pop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
