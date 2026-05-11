@@ -235,7 +235,6 @@ export default async function Home() {
           <a href='/tournaments' style={{background: '#1a2a55', color: '#fff', padding: '14px 28px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', fontSize: '16px'}}>Все турниры</a>
         </div>
       </section>
-  
     </main>
       <footer
         id="contacts"
