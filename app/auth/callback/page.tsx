@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function CallbackPage() {
+function CallbackHandler() {
   const [status, setStatus] = useState("Авторизация...");
   const searchParams = useSearchParams();
 
@@ -46,5 +46,25 @@ export default function CallbackPage() {
     }}>
       {status}
     </div>
+  );
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: "100vh",
+        background: "#0b1535",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#fff",
+        fontSize: 18,
+      }}>
+        Авторизация...
+      </div>
+    }>
+      <CallbackHandler />
+    </Suspense>
   );
 }
