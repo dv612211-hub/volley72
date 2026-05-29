@@ -96,6 +96,13 @@ function PlayerProfile({ player }: { player: PublicPlayer }) {
 
   return (
     <div className="space-y-5">
+      <Link
+        href={`/players/${player.id}/edit`}
+        className="block h-12 w-full rounded-2xl border border-orange-400/40 bg-orange-500/10 text-center text-sm font-bold leading-[3rem] text-orange-200 transition hover:bg-orange-500 hover:text-[#0b1535]"
+      >
+        ✏️ Редактировать профиль
+      </Link>
+
       <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-orange-500/15 via-white/[0.03] to-blue-500/10 p-5 sm:p-6">
         <div className="flex items-center gap-4">
           {player.photo_url ? (

@@ -41,41 +41,105 @@ const inputCls =
 
 type Step = 1 | 2 | 3 | 4;
 
+export type PlayerWizardData = {
+  name: string;
+  phone: string | null;
+  gender: PlayerGender | null;
+  birth_date: string | null;
+  height: number | null;
+  city: string;
+  photo_url: string | null;
+  direction: Direction | null;
+  game_formats: GameFormat[];
+  dominant_hand: DominantHand | null;
+  available_time: AvailableTime[];
+  tournament_experience: TournamentExp | null;
+  training_experience: TrainingExp[];
+  skills: Partial<Skills>;
+};
+
+export type PlayerWizardProps = {
+  initial?: Partial<PlayerWizardData>;
+  onSubmit: (data: PlayerWizardData) => Promise<void>;
+  submitLabel?: string;
+  backHref?: string;
+};
+
 export default function CreatePlayerPage() {
   const router = useRouter();
+  return (
+    <PlayerWizard
+      submitLabel="Создать профиль"
+      onSubmit={async (data) => {
+        const res = await fetch("/api/players", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const payload = (await res.json().catch(() => ({}))) as {
+          player?: { id: string };
+          error?: string;
+        };
+        if (!res.ok || !payload.player?.id) {
+          throw new Error(payload.error ?? `HTTP ${res.status}`);
+        }
+        router.push(`/players/${payload.player.id}`);
+      }}
+    />
+  );
+}
+
+export function PlayerWizard({
+  initial,
+  onSubmit,
+  submitLabel,
+  backHref,
+}: PlayerWizardProps) {
   const [step, setStep] = useState<Step>(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   // Step 1
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [gender, setGender] = useState<PlayerGender | null>(null);
-  const [birthDate, setBirthDate] = useState("");
-  const [height, setHeight] = useState("");
-  const [city, setCity] = useState("Тюмень");
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
+  const [gender, setGender] = useState<PlayerGender | null>(
+    initial?.gender ?? null,
+  );
+  const [birthDate, setBirthDate] = useState(initial?.birth_date ?? "");
+  const [height, setHeight] = useState(
+    initial?.height != null ? String(initial.height) : "",
+  );
+  const [city, setCity] = useState(initial?.city ?? "Тюмень");
+  const [photo, setPhoto] = useState<string | null>(initial?.photo_url ?? null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Step 2
-  const [direction, setDirection] = useState<Direction | null>(null);
-  const [gameFormats, setGameFormats] = useState<GameFormat[]>([]);
-  const [hand, setHand] = useState<DominantHand | null>(null);
+  const [direction, setDirection] = useState<Direction | null>(
+    initial?.direction ?? null,
+  );
+  const [gameFormats, setGameFormats] = useState<GameFormat[]>(
+    initial?.game_formats ?? [],
+  );
+  const [hand, setHand] = useState<DominantHand | null>(
+    initial?.dominant_hand ?? null,
+  );
 
   // Step 3
-  const [availableTime, setAvailableTime] = useState<AvailableTime[]>([]);
-  const [tournamentExp, setTournamentExp] = useState<TournamentExp | null>(
-    null,
+  const [availableTime, setAvailableTime] = useState<AvailableTime[]>(
+    initial?.available_time ?? [],
   );
-  const [trainingExp, setTrainingExp] = useState<TrainingExp[]>([]);
+  const [tournamentExp, setTournamentExp] = useState<TournamentExp | null>(
+    initial?.tournament_experience ?? null,
+  );
+  const [trainingExp, setTrainingExp] = useState<TrainingExp[]>(
+    initial?.training_experience ?? [],
+  );
 
   // Step 4
-  const [skills, setSkills] = useState<Partial<Skills>>({});
-
-  function toggleArr<T>(arr: T[], v: T): T[] {
-    return arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
-  }
+  const [skills, setSkills] = useState<Partial<Skills>>(
+    initial?.skills ?? {},
+  );
 
   const phoneValid = phone === "" || isPhoneValid(phone);
   const canNext1 =
@@ -103,34 +167,22 @@ export default function CreatePlayerPage() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/players", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: phone.trim() || null,
-          gender,
-          birth_date: birthDate || null,
-          height: height ? Number(height) : null,
-          photo_url: photo,
-          city: city.trim() || "Тюмень",
-          direction,
-          game_formats: gameFormats,
-          dominant_hand: hand,
-          available_time: availableTime,
-          tournament_experience: tournamentExp,
-          training_experience: trainingExp,
-          skills,
-        }),
+      await onSubmit({
+        name: name.trim(),
+        phone: phone.trim() || null,
+        gender,
+        birth_date: birthDate || null,
+        height: height ? Number(height) : null,
+        photo_url: photo,
+        city: city.trim() || "Тюмень",
+        direction,
+        game_formats: gameFormats,
+        dominant_hand: hand,
+        available_time: availableTime,
+        tournament_experience: tournamentExp,
+        training_experience: trainingExp,
+        skills,
       });
-      const data = (await res.json().catch(() => ({}))) as {
-        player?: { id: string };
-        error?: string;
-      };
-      if (!res.ok || !data.player?.id) {
-        throw new Error(data.error ?? `HTTP ${res.status}`);
-      }
-      router.push(`/players/${data.player.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setBusy(false);
@@ -141,8 +193,8 @@ export default function CreatePlayerPage() {
     <div className="flex min-h-screen flex-1 flex-col bg-[#0b1535] text-slate-100">
       <header className="border-b border-white/5">
         <div className="mx-auto flex w-full max-w-lg items-center justify-between px-4 py-3 sm:px-6">
-          <Link href="/players" className="text-sm text-slate-300">
-            ← К списку
+          <Link href={backHref ?? "/players"} className="text-sm text-slate-300">
+            ← Назад
           </Link>
           <span className="text-xs uppercase tracking-widest text-slate-400">
             Шаг {step} из 4
@@ -227,7 +279,8 @@ export default function CreatePlayerPage() {
                 type="date"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
-                className={inputCls}
+                className={`${inputCls} block`}
+                style={{ width: "100%", boxSizing: "border-box" }}
               />
             </Field>
 
@@ -437,7 +490,7 @@ export default function CreatePlayerPage() {
               style={tapStyle}
               className="h-14 flex-1 rounded-2xl bg-orange-500 text-base font-bold text-[#0b1535] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {busy ? "Создаём…" : "Создать профиль"}
+              {busy ? "Сохраняем…" : (submitLabel ?? "Создать профиль")}
             </button>
           )}
         </div>
@@ -479,11 +532,15 @@ function Field({
 }) {
   return (
     <div>
-      <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-300">
+      <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-300">
         {label}
         {required && <span className="text-orange-400"> *</span>}
-        {hint && <span className="ml-2 text-[10px] font-normal text-slate-500">{hint}</span>}
       </p>
+      {hint && (
+        <p className="mb-1.5 text-[11px] font-normal leading-snug text-slate-500">
+          {hint}
+        </p>
+      )}
       {children}
     </div>
   );
@@ -645,6 +702,7 @@ function PhotoUpload({
         ref={inputRef}
         type="file"
         accept="image/*"
+        capture="user"
         onChange={onFile}
         className="hidden"
       />
