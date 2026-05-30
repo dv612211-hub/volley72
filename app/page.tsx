@@ -1,6 +1,7 @@
 import { getEvents, type EventRow } from "@/lib/api";
 import { formatEventDate, formatPrice } from "@/lib/format";
 import { ApplyButton } from "./components/ApplyButton";
+import { cookies } from "next/headers";
 
 async function loadEvents(): Promise<EventRow[]> {
   try {
@@ -15,6 +16,13 @@ export default async function Home() {
   const events = await loadEvents();
   const featured = events[0];
   const list = events.slice(0, 6);
+
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session")?.value;
+  let player: { player_id: string; name: string; photo_url?: string } | null = null;
+  try {
+    if (session) player = JSON.parse(session);
+  } catch {}
 
   return (
     <div className="flex flex-1 flex-col bg-[#0b1535] text-slate-100">
@@ -33,12 +41,76 @@ export default async function Home() {
             <a href="#about" className="hover:text-white">О нас</a>
             <a href="#contacts" className="hover:text-white">Контакты</a>
           </nav>
-          <a
-            href="#events"
-            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-[#0b1535] transition hover:bg-orange-400"
-          >
-            Записаться
+          {player ? (
+            
+              href="/profile"
+              className="flex items-center gap-2 rounded-
+cat > ~/volley72/app/page.tsx << 'EOF'
+import { getEvents, type EventRow } from "@/lib/api";
+import { formatEventDate, formatPrice } from "@/lib/format";
+import { ApplyButton } from "./components/ApplyButton";
+import { cookies } from "next/headers";
+
+async function loadEvents(): Promise<EventRow[]> {
+  try {
+    return await getEvents();
+  } catch (err) {
+    console.error("Failed to load events:", err);
+    return [];
+  }
+}
+
+export default async function Home() {
+  const events = await loadEvents();
+  const featured = events[0];
+  const list = events.slice(0, 6);
+
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session")?.value;
+  let player: { player_id: string; name: string; photo_url?: string } | null = null;
+  try {
+    if (session) player = JSON.parse(session);
+  } catch {}
+
+  return (
+    <div className="flex flex-1 flex-col bg-[#0b1535] text-slate-100">
+      <header className="sticky top-0 z-20 border-b border-white/5 bg-[#0b1535]/80 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+          <a href="/" className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-orange-500 font-black text-[#0b1535] shadow-lg shadow-orange-500/30">
+              V
+            </span>
+            <span className="text-lg font-bold tracking-tight">
+              Volley<span className="text-orange-400">72</span>
+            </span>
           </a>
+          <nav className="hidden items-center gap-7 text-sm text-slate-300 md:flex">
+            <a href="#events" className="hover:text-white">События</a>
+            <a href="#about" className="hover:text-white">О нас</a>
+            <a href="#contacts" className="hover:text-white">Контакты</a>
+          </nav>
+          {player ? (
+            
+              href="/profile"
+              className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+            >
+              {player.photo_url ? (
+                <img src={player.photo_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+              ) : (
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-orange-500 text-xs font-bold text-[#0b1535]">
+                  {player.name?.charAt(0)?.toUpperCase() || "?"}
+                </span>
+              )}
+              {player.name?.split(" ")[0]}
+            </a>
+          ) : (
+            
+              href="/auth/login"
+              className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-[#0b1535] transition hover:bg-orange-400"
+            >
+              Войти
+            </a>
+          )}
         </div>
       </header>
 
@@ -67,13 +139,13 @@ export default async function Home() {
                 Найди свой состав, забронируй место — и на площадку.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a
+                
                   href="#events"
                   className="flex h-12 items-center justify-center rounded-full bg-orange-500 px-7 text-sm font-semibold text-[#0b1535] transition hover:bg-orange-400"
                 >
                   Ближайшие игры
                 </a>
-                <a
+                
                   href="#about"
                   className="flex h-12 items-center justify-center rounded-full border border-white/15 px-7 text-sm font-semibold text-slate-100 transition hover:bg-white/5"
                 >
@@ -170,7 +242,7 @@ export default async function Home() {
                   Бронируй место в один клик. Места заканчиваются быстро.
                 </p>
               </div>
-              <a
+              
                 href="#"
                 className="hidden rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/5 sm:inline-block"
               >
@@ -228,6 +300,7 @@ export default async function Home() {
             )}
           </div>
         </section>
+
         <section style={{padding: '40px 16px', textAlign: 'center', background: '#0b1535'}}>
           <h2 style={{fontSize: '24px', fontWeight: 700, marginBottom: '16px', color: '#fff'}}>Турниры</h2>
           <div style={{display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap'}}>
@@ -236,10 +309,8 @@ export default async function Home() {
           </div>
         </section>
       </main>
-      <footer
-        id="contacts"
-        className="border-t border-white/10 bg-[#070b20]"
-      >
+
+      <footer id="contacts" className="border-t border-white/10 bg-[#070b20]">
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-12 sm:px-8 md:grid-cols-3">
           <div>
             <div className="flex items-center gap-2.5">
