@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-function CallbackHandler() {
+function CallbackInner() {
   const [status, setStatus] = useState("Авторизация...");
   const searchParams = useSearchParams();
 
@@ -61,10 +61,10 @@ export default function CallbackPage() {
         color: "#fff",
         fontSize: 18,
       }}>
-        Авторизация...
+        Загрузка...
       </div>
     }>
-      <CallbackHandler />
+      <CallbackInner />
     </Suspense>
   );
 }
