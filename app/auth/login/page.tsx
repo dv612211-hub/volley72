@@ -1,108 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 export default function LoginPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
-
+  const [url, setUrl] = useState("");
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-
-    let cancelled = false;
-
-    import("@vkid/sdk").then((VKID) => {
-      if (cancelled || !containerRef.current) return;
-
-      VKID.Config.init({
-        app: 54611008,
-        redirectUrl: "https://volley72.ru/auth/callback",
-        responseMode: VKID.ConfigResponseMode.Callback,
-        source: VKID.ConfigSource.LOWCODE,
-        scope: "",
-      });
-
-      const oneTap = new VKID.OneTap();
-
-      oneTap
-        .render({
-          container: containerRef.current,
-          showAlternativeLogin: true,
-        })
-        .on(VKID.WidgetEvents.ERROR, (error: any) => {
-          console.error("VK ID error:", error);
-        })
-        .on(
-          VKID.OneTapInternalEvents.LOGIN_SUCCESS,
-          async (payload: any) => {
-            const code = payload.code;
-            const deviceId = payload.device_id;
-            try {
-              const res = await fetch("/api/auth/vk", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code, device_id: deviceId }),
-              });
-              const data = await res.json();
-              if (data.success) {
-                window.location.href = "/profile";
-              } else {
-                alert("Ошибка входа: " + (data.error || "Неизвестная ошибка"));
-              }
-            } catch (e) {
-              console.error("Auth error:", e);
-              alert("Ошибка соединения");
-            }
-          }
-        );
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    setUrl("https://id.vk.com/oauth2/authorize?client_id=54611008&redirect_uri=https%3A%2F%2Fvolley72.ru%2Fauth%2Fcallback&response_type=code&scope=vkid.personal_info");
   }, []);
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0b1535",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "sans-serif",
-      }}
-    >
-      <div style={{ marginBottom: 32, textAlign: "center" }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#fff", marginBottom: 8 }}>
-          Volley<span style={{ color: "#f97316" }}>72</span>
-        </h1>
-        <p style={{ color: "#94a3b8", fontSize: 16 }}>Войдите чтобы продолжить</p>
+    <div style={{minHeight:"100vh",background:"#0b1535",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 16px",fontFamily:"sans-serif"}}>
+      <div style={{marginBottom:40,textAlign:"center"}}>
+        <h1 style={{fontSize:28,fontWeight:700,color:"#fff",marginBottom:8}}>Volley<span style={{color:"#f97316"}}>72</span></h1>
+        <p style={{color:"#94a3b8",fontSize:16}}>Войдите чтобы продолжить</p>
       </div>
-      <div
-        ref={containerRef}
-        style={{
-          width: "100%",
-          maxWidth: 360,
-          minHeight: 44,
-          display: "flex",
-          justifyContent: "center",
-        }}
-      />
-      <a
-        href="/"
-        style={{
-          marginTop: 32,
-          color: "#64748b",
-          fontSize: 14,
-          textDecoration: "none",
-        }}
-      >
-        ← На главную
-      </a>
+      <a href={url || "#"} style={{display:"block",width:"100%",maxWidth:360,padding:"14px 24px",background:"#0077FF",color:"#fff",borderRadius:12,fontWeight:700,fontSize:16,textDecoration:"none",textAlign:"center"}}>Войти через VK</a>
+      <a href="/" style={{marginTop:24,color:"#64748b",fontSize:14,textDecoration:"none"}}>На главную</a>
     </div>
   );
 }
