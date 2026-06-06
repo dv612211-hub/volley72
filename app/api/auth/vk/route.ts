@@ -8,59 +8,38 @@ const supabase = createClient(
 
 export async function POST(req: NextRequest) {
   try {
-    const { code, device_id } = await req.json();
-    if (!code) return NextResponse.json({ error: "No code" }, { status: 400 });
+    const { vk_id, first_name, last_name, photo_url } = await req.json();
 
-    const tokenRes = await fetch("https://id.vk.com/oauth2/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code,
-        client_id: process.env.VK_CLIENT_ID || "54611008",
-        client_secret: process.env.VK_CLIENT_SECRET || "",
-        redirect_uri: (process.env.NEXT_PUBLIC_APP_URL || "https://volley72.ru") + "/auth/callback",
-        device_id: device_id || "",
-      }),
-    });
-    const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) {
-      return NextResponse.json({ error: "VK token error", details: tokenData }, { status: 400 });
+    if (!vk_id) {
+      return NextResponse.json({ error: "Нет vk_id" }, { status: 400 });
     }
 
-    const userRes = await fetch("https://id.vk.com/oauth2/user_info", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        access_token: tokenData.access_token,
-        client_id: process.env.VK_CLIENT_ID || "54611008",
-      }),
-    });
-    const userData = await userRes.json();
-    const vkUser = userData.user || userData;
-    const vkId = vkUser.user_id || vkUser.id;
-    const firstName = vkUser.first_name || "";
-    const lastName = vkUser.last_name || "";
-    const fullName = (firstName + " " + lastName).trim();
-    const photoUrl = vkUser.avatar || vkUser.photo_200 || null;
+    const fullName = ((first_name || "") + " " + (last_name || "")).trim() || "Игрок";
 
     let { data: player } = await supabase
       .from("players")
       .select("*")
-      .eq("vk_id", vkId)
+      .eq("vk_id", vk_id)
       .single();
 
     if (!player) {
       const { data: newPlayer, error } = await supabase
         .from("players")
-        .insert({ name: fullName, vk_id: vkId, photo_url: photoUrl })
+        .insert({ name: fullName, vk_id, photo_url: photo_url || null })
         .select()
         .single();
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
       player = newPlayer;
     }
 
-    const sessionValue = JSON.stringify({ player_id: player.id, name: player.name, photo_url: player.photo_url });
+    const sessionValue = JSON.stringify({
+      player_id: player.id,
+      name: player.name,
+      photo_url: player.photo_url,
+    });
+
     const response = NextResponse.json({ success: true, player_id: player.id });
     response.cookies.set("session", sessionValue, {
       httpOnly: true,
