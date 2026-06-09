@@ -24,32 +24,6 @@ export default async function Home() {
     if (session) player = JSON.parse(session);
   } catch {}
 
-  // роль и заявки для админа
-  let isAdmin = false;
-  let pendingCount = 0;
-  try {
-    if (player?.player_id) {
-      const { createClient } = await import("@supabase/supabase-js");
-      const sb = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SECRET_KEY!
-      );
-      const { data: me } = await sb
-        .from("players")
-        .select("role")
-        .eq("id", player.player_id)
-        .single();
-      isAdmin = me?.role === "admin";
-      if (isAdmin) {
-        const { count } = await sb
-          .from("players")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "pending");
-        pendingCount = count || 0;
-      }
-    }
-  } catch {}
-
   return (
     <div className="flex flex-1 flex-col bg-[#0b1535] text-slate-100">
       <header className="sticky top-0 z-20 border-b border-white/5 bg-[#0b1535]/80 backdrop-blur">
@@ -62,27 +36,7 @@ export default async function Home() {
             <a href="#events" className="hover:text-white">События</a>
             <a href="#about" className="hover:text-white">О нас</a>
             <a href="#contacts" className="hover:text-white">Контакты</a>
-            {isAdmin && (
-              <a href="/admin" className="relative hover:text-white">
-                Заявки
-                {pendingCount > 0 && (
-                  <span className="absolute -right-4 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-[#0b1535]">
-                    {pendingCount}
-                  </span>
-                )}
-              </a>
-            )}
           </nav>
-          {isAdmin && (
-            <a href="/admin" className="relative mr-2 flex items-center rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
-              Заявки
-              {pendingCount > 0 && (
-                <span className="ml-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-orange-500 px-1 text-[11px] font-bold text-[#0b1535]">
-                  {pendingCount}
-                </span>
-              )}
-            </a>
-          )}
           {player ? (
             <a href="/profile" className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
               {player.photo_url ? (
