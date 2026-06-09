@@ -208,6 +208,7 @@ export default async function Home() {
           <div style={{display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap'}}>
             <a href='/tournaments/create' style={{background: '#f97316', color: '#fff', padding: '14px 28px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', fontSize: '16px'}}>Создать турнир</a>
             <a href='/tournaments' style={{background: '#1a2a55', color: '#fff', padding: '14px 28px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', fontSize: '16px'}}>Все турниры</a>
+            <a href='/venues' style={{background: '#1a2a55', color: '#fff', padding: '14px 28px', borderRadius: '10px', fontWeight: 700, textDecoration: 'none', fontSize: '16px'}}>Площадки</a>
           </div>
         </section>
       </main>
