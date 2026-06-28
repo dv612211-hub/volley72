@@ -3,7 +3,7 @@ SQL_FILE=$1
 if [ -z "$SQL_FILE" ]; then echo "❌ Укажи файл"; exit 1; fi
 if [ ! -f "$SQL_FILE" ]; then echo "❌ Файл не найден: $SQL_FILE"; exit 1; fi
 PROJECT_REF="uysubfuenfzzcoavbrch"
-TOKEN="sbp_968863749817b11b171f33fb4d6f5604fd399e9b"
+TOKEN="SUPABASE_TOKEN_HERE"
 echo "🚀 Применяю: $SQL_FILE"
 RESPONSE=$(python3 -c "
 import urllib.request, json, sys

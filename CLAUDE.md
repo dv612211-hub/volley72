@@ -32,7 +32,7 @@ if (!isAdmin(player)) return new Response('Forbidden', { status: 403 })
 apply_sql() {
   curl -s -X POST \
     "https://api.supabase.com/v1/projects/uysubfuenfzzcoavbrch/database/query" \
-    -H "Authorization: Bearer sbp_968863749817b11b171f33fb4d6f5604fd399e9b" \
+    -H "Authorization: Bearer SUPABASE_TOKEN_HERE" \
     -H "Content-Type: application/json" \
     -d "{\"query\": \"$(cat $1 | sed 's/"/\\"/g' | tr '\n' ' ')\"}"
 }
@@ -49,10 +49,10 @@ apply_sql() {
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://uysubfuenfzzcoavbrch.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_T2P9HPAdI_________lHfjA_Bh8UNtVY
-SUPABASE_SECRET_KEY=sb_secret_aZq5NQJENjwz___________hZL3UFCb
+SUPABASE_SECRET_KEY=SUPABASE_SECRET_HERE
 VK_CLIENT_ID=54611008
 NEXT_PUBLIC_APP_URL=https://volley72.ru
-SUPABASE_ACCESS_TOKEN=sbp_968863749817b11b171f33fb4d6f5604fd399e9b
+SUPABASE_ACCESS_TOKEN=SUPABASE_TOKEN_HERE
 SUPABASE_PROJECT_REF=uysubfuenfzzcoavbrch
 ```
 
